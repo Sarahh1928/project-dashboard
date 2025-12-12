@@ -82,9 +82,9 @@ src/
 │  ├─ projects/
 │  │  ├─ EditProjectModal.tsx
 │  │  └─ EditTaskModal.tsx
+│  │  └─ ProgressChart.tsx
 │  ├─ layout/
 │  │  ├─ Navbar.tsx
-│  │  └─ Sidebar.tsx
 │  ├─ ui/
 │  │  ├─ button.tsx
 │  │  ├─ card.tsx
