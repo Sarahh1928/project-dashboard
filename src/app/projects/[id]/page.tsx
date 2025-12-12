@@ -128,7 +128,6 @@ function ProjectInfo({ project }: { project: ProjectType }) {
   return (
     <Card className="shadow-md border border-gray-200 rounded-lg">
       <CardContent className="p-6 space-y-6">
-        {/* Top section: Description + Chart */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
           {/* Left column: Description & Status */}
           <div className="flex-1 space-y-3">
@@ -171,10 +170,6 @@ function ProjectInfo({ project }: { project: ProjectType }) {
             </div>
           </div>
 
-          {/* Right column: Progress Chart */}
-          <div className="w-58 h-38 flex items-center justify-center rounded-lg shadow-inner">
-            <ProgressChart project={project} />
-          </div>
         </div>
       </CardContent>
     </Card>
@@ -185,11 +180,15 @@ function ProjectInfo({ project }: { project: ProjectType }) {
 
 function TasksSection({
   tasks,
-  canManageTasks,
+  canEditTasks,
+  canDeleteTasks,
+  canAddTasks,
   projectId,
 }: {
   tasks: TaskType[];
-  canManageTasks: boolean;
+  canEditTasks: boolean;
+  canDeleteTasks: boolean;
+  canAddTasks: boolean;
   projectId: string;
 }) {
   const [editingTask, setEditingTask] = useState<TaskType | null>(null);
@@ -207,17 +206,29 @@ function TasksSection({
     (assignedFilter ? task.assignedTo === assignedFilter : true)
   );
 
-  const emptyTask: TaskType = { id: "", projectId, name: "", status: "Pending", priority: "Medium", assignedTo: "", progress: 0, dueDate: new Date().toISOString().slice(0, 10), };
+  const emptyTask: TaskType = {
+    id: "",
+    projectId,
+    name: "",
+    status: "Pending",
+    priority: "Medium",
+    assignedTo: "",
+    progress: 0,
+    dueDate: new Date().toISOString().slice(0, 10),
+  };
+
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
 
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTasks(prev =>
-      prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
     );
   };
 
   const updateSelectedTasks = async (payload: Partial<TaskType>) => {
-    if (!projectId) return;
+    if (!projectId || !canEditTasks) return;
 
     const updatedTasks = await Promise.all(
       selectedTasks.map(id => updateTask(id, payload))
@@ -233,85 +244,181 @@ function TasksSection({
     setSelectedTasks([]);
   };
 
-
-
   return (
     <>
-      <Card className="shadow-sm border border-gray-200">
-        <CardContent className="p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <Card className="border border-gray-200 shadow-sm rounded-xl">
+        <CardContent className="p-6 space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900">Tasks</h2>
-            {canManageTasks && <Button onClick={() => setAddingTask(true)}>Add Task</Button>}
+            {canAddTasks && (
+              <Button onClick={() => setAddingTask(true)}>
+                + Add Task
+              </Button>
+            )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <input placeholder="Search tasks..." value={search} onChange={e => setSearch(e.target.value)} className="border p-2 rounded flex-1 min-w-[120px]" />
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border p-2 rounded">
+          {/* Filters */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <input
+              placeholder="Search tasks..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="border rounded-md px-3 py-2 text-sm"
+            />
+            <select className="border rounded-md px-3 py-2 text-sm" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
               <option value="">All Status</option>
               <option value="Pending">Pending</option>
               <option value="Active">Active</option>
               <option value="Completed">Completed</option>
             </select>
-            <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="border p-2 rounded">
+            <select className="border rounded-md px-3 py-2 text-sm" value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)}>
               <option value="">All Priority</option>
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
               <option value="High">High</option>
             </select>
-            <select value={assignedFilter} onChange={e => setAssignedFilter(e.target.value)} className="border p-2 rounded">
+            <select className="border rounded-md px-3 py-2 text-sm" value={assignedFilter} onChange={e => setAssignedFilter(e.target.value)}>
               <option value="">All Users</option>
-              {users.map(u => <option key={u.name} value={u.name}>{u.name}</option>)}
+              {users.map(u => (
+                <option key={u.name} value={u.name}>
+                  {u.name}
+                </option>
+              ))}
             </select>
           </div>
 
+          {/* Task List */}
           {filteredTasks.length === 0 ? (
-            <p className="text-gray-500 mt-4">No tasks match your filters.</p>
+            <p className="text-gray-500 text-center py-6">
+              No tasks match your filters.
+            </p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {filteredTasks.map(task => (
-                <li key={task.id} className="p-4 border rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-gray-50 transition">
-                  <div className="flex items-center gap-2">
-                    {canManageTasks && <input type="checkbox" checked={selectedTasks.includes(task.id)} onChange={() => toggleTaskSelection(task.id)} />}
-                    <div>
-                      <p className="font-semibold text-gray-800">{task.name}</p>
-                      <p className="text-sm text-gray-600">{task.status}</p>
+                <li
+                  key={task.id}
+                  className="border rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition"
+                >
+                  {/* Left */}
+                  <div className="flex items-start gap-3 flex-1">
+                    {canEditTasks && (
+                      <input
+                        type="checkbox"
+                        checked={selectedTasks.includes(task.id)}
+                        onChange={() => toggleTaskSelection(task.id)}
+                        className="mt-1"
+                      />
+                    )}
+
+                    <div className="space-y-2 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-gray-900">
+                          {task.name}
+                        </p>
+                        <span className="text-xs px-2 py-1 rounded bg-gray-100">
+                          {task.status}
+                        </span>
+                        <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
+                          {task.priority}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-gray-500">
+                        Assigned to: {task.assignedTo || "—"}
+                      </p>
+
+                      {/* Progress */}
+                      <div className="flex items-center gap-4 m-0">
+                        <div className="w-24 h-24">
+                          <ProgressChart task={task} />
+                        </div>
+
+                        <div className="text-sm text-gray-600">
+                          <p className="font-medium text-gray-800">
+                            {task.progress}% Completed
+                          </p>
+                          <p className="text-xs">
+                            Due: {task.dueDate}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  {canManageTasks && (
+
+                  {/* Actions */}
+                  {(canEditTasks || canDeleteTasks) && (
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => setEditingTask(task)}>Edit</Button>
-                      <Button size="sm" variant="destructive" onClick={async () => { await deleteTask(task.id); mutate(["projectTasks", projectId], (tasks: TaskType[] = []) => tasks.filter(t => t.id !== task.id), false); }}>Delete</Button>
+                      {canEditTasks && (
+                        <Button size="sm" onClick={() => setEditingTask(task)}>
+                          Edit
+                        </Button>
+                      )}
+                      {canDeleteTasks && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={async () => {
+                            await deleteTask(task.id);
+                            mutate(
+                              ["projectTasks", projectId],
+                              (tasks: TaskType[] = []) =>
+                                tasks.filter(t => t.id !== task.id),
+                              false
+                            );
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   )}
                 </li>
               ))}
             </ul>
           )}
-
         </CardContent>
       </Card>
 
-      {selectedTasks.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          <Button onClick={() => updateSelectedTasks({ status: "Completed" })}>Mark Completed</Button>
-          <Button onClick={() => updateSelectedTasks({ status: "Active" })}>Mark Active</Button>
+      {/* Bulk Actions */}
+      {canEditTasks && selectedTasks.length > 0 && (
+        <div className="flex gap-2 mt-3">
+          <Button onClick={() => updateSelectedTasks({ status: "Completed" })}>
+            Mark Completed
+          </Button>
+          <Button onClick={() => updateSelectedTasks({ status: "Active" })}>
+            Mark Active
+          </Button>
         </div>
       )}
 
+      {/* Modals */}
       {(editingTask || addingTask) && (
         <EditTaskModal
           task={editingTask ?? emptyTask}
           users={users.map(u => u.name)}
-          onClose={() => { setEditingTask(null); setAddingTask(false); }}
+          onClose={() => {
+            setEditingTask(null);
+            setAddingTask(false);
+          }}
           onUpdate={async (newTask) => {
             if (addingTask) {
               newTask.id = `t${Date.now()}`;
               const addedTask = await addTask(newTask);
-              mutate(["projectTasks", projectId], (tasks: TaskType[] = []) => [...tasks, addedTask], false);
+              mutate(
+                ["projectTasks", projectId],
+                (tasks: TaskType[] = []) => [...tasks, addedTask],
+                false
+              );
               setAddingTask(false);
             } else if (editingTask) {
               await updateTask(editingTask.id, newTask);
-              mutate(["projectTasks", projectId], (tasks: TaskType[] = []) => tasks.map(t => t.id === newTask.id ? newTask : t), false);
+              mutate(
+                ["projectTasks", projectId],
+                (tasks: TaskType[] = []) =>
+                  tasks.map(t => (t.id === newTask.id ? newTask : t)),
+                false
+              );
               setEditingTask(null);
             }
           }}
@@ -320,6 +427,8 @@ function TasksSection({
     </>
   );
 }
+
+
 
 
 
@@ -348,7 +457,9 @@ export default function ProjectDetailsPage() {
 
   const canEditProject = role === "Admin" || role === "ProjectManager";
   const canDeleteProject = role === "Admin";
-  const canManageTasks = role === "Admin" || role === "ProjectManager" || role === "Developer";
+  const canEditTasks = role === "Admin" || role === "ProjectManager" || role === "Developer";
+  const canDeleteTasks = role === "Admin" || role === "ProjectManager";
+  const canAddTasks = role === "Admin" || role === "ProjectManager";
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
@@ -376,7 +487,13 @@ export default function ProjectDetailsPage() {
         />
       )}
 
-      <TasksSection tasks={tasks ?? []} canManageTasks={canManageTasks} projectId={project!.id} />
+      <TasksSection
+        tasks={tasks ?? []}
+        canEditTasks={canEditTasks}
+        canDeleteTasks={canDeleteTasks}
+        canAddTasks={canAddTasks}
+        projectId={project!.id}
+      />
     </div>
   );
 }

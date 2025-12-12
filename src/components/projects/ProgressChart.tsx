@@ -1,23 +1,23 @@
 "use client";
 
 import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from "recharts";
-import { Project as ProjectType } from "@/services/mockData";
+import { Task } from "@/services/mockData";
 
 interface ProgressChartProps {
-    project: ProjectType;
+    task: Task;
 }
 
-export default function ProgressChart({ project }: ProgressChartProps) {
+export default function ProgressChart({ task }: ProgressChartProps) {
     const data = [
         {
-            name: project.name,
-            progress: project.progress, // 0-100
+            name: task.name,
+            progress: task.progress, // 0-100
             fill: "#3b82f6",
         },
     ];
 
     return (
-        <div className="relative w-full h-64 m-4">
+        <div className="relative w-full h-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart
                     innerRadius="70%"
@@ -42,7 +42,7 @@ export default function ProgressChart({ project }: ProgressChartProps) {
             </ResponsiveContainer>
 
             <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-gray-800">
-                {project.progress}%
+                {task.progress}%
             </div>
         </div>
     );
