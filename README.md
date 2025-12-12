@@ -1,36 +1,198 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+A **React + Next.js (LTS) Project Dashboard** application with role-based access, task management, and advanced project filtering. This is a feature-rich frontend prototype, designed for educational and assessment purposes.
+
+> **Note:** The project uses mock data for authentication, projects, and tasks. JWT and roles are simulated on the frontend. Real-time task
+updates are mocked using setTimeout to simulate WebSocket events.
+
+---
+
+## Table of Contents
+
+1. [Tech Stack](#tech-stack)
+2. [Features](#features)
+3. [Directory Structure](#directory-structure)
+4. [Getting Started](#getting-started)
+5. [Usage](#usage)
+6. [Role-Based Access](#role-based-access)
+7. [Future / Optional Features](#future--optional-features)
+8. [License](#license)
+
+---
+
+## Tech Stack
+
+* **React (Latest) + Next.js (LTS)**
+* **TypeScript**
+* **TailwindCSS / ShadCN UI** for UI components
+* **Redux Toolkit** for global state (auth)
+* **SWR** for data fetching and caching
+* **react-hook-form + Zod** for form validation
+
+---
+
+## Features
+
+* **Authentication & Role Management** (mocked)
+
+  * Login using email & password from `mockData.ts`
+  * Roles: `Admin`, `ProjectManager`, `Developer`
+  * JWT token stored in localStorage (mock)
+* **Dashboard Page**
+
+  * Project list with pagination, sorting, and filtering
+  * Columns: Name, Status, Start Date, End Date, Progress, Budget
+  * Inline edit for authorized roles (`Admin` & `ProjectManager`)
+* **Project Details Page**
+
+  * View project info
+  * Task list with search, filter, and bulk update
+  * Add, edit, delete tasks
+  * Role-based access: Developers can edit tasks only
+* **UI Enhancements**
+
+  * Fully responsive
+  * Skeleton loaders for async data
+  * Optimistic updates with SWR
+* **Mock Data & Services**
+
+  * `mockData.ts` for users, projects, tasks
+  * `projectService.ts` and `taskService.ts` for CRUD operations
+  * `authService.ts` for login/logout
+
+---
+
+## Directory Structure
+
+```
+src/
+│
+├─ app/
+│  ├─ api/projects/route.ts        
+│  ├─ dashboard/page.tsx           # Dashboard page
+│  ├─ login/page.tsx               # Login page
+│  ├─ projects/[id]/page.tsx       # Project details page
+│  ├─ public/                      
+│  ├─ layout.tsx
+│  └─ providers.tsx
+│
+├─ components/
+│  ├─ dashboard/
+│  │  ├─ ProjectFilters.tsx
+│  │  ├─ ProjectTable.tsx
+│  │  └─ EditProjectModal.tsx
+│  ├─ projects/
+│  │  ├─ EditProjectModal.tsx
+│  │  └─ EditTaskModal.tsx
+│  ├─ layout/
+│  │  ├─ Navbar.tsx
+│  │  └─ Sidebar.tsx
+│  ├─ ui/
+│  │  ├─ button.tsx
+│  │  ├─ card.tsx
+│  │  ├─ checkbox.tsx
+│  │  ├─ dialog.tsx
+│  │  ├─ input.tsx
+│  │  ├─ select.tsx
+│  │  └─ table.tsx
+│  ├─ AccessDenied.tsx
+│  └─ RoleGuard.tsx
+│
+├─ lib/
+│  ├─ utils.ts
+│  └─ zod-schemas.ts
+│
+├─ redux/
+│  ├─ authSlice.ts
+│  └─ store.ts
+│
+└─ services/
+   ├─ authService.ts
+   ├─ mockData.ts
+   ├─ projectService.ts
+   └─ taskService.ts
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+* Node.js >= 20.x
+* npm or yarn
+
+### Installation
 
 ```bash
+# Clone the repo
+git clone https://github.com/Sarahh1928/project-dashboard.git
+cd project-dashboard
+
+# Install dependencies
+npm install
+# or
+yarn install
+```
+
+### Run Locally
+
+```bash
+# Start Next.js dev server
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app should be available at [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Usage
 
-## Learn More
+1. **Login**
 
-To learn more about Next.js, take a look at the following resources:
+   * Use the credentials defined in `src/services/mockData.ts`. Example:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+     ```ts
+     { id: "u1", name: "Sarah", email: "admin@example.com", password: "admin123", role: "Admin" },
+     { id: "u2", name: "Ahmed", email: "pm@example.com", password: "pmanager123", role: "ProjectManager" },
+     { id: "u3", name: "Omar", email: "dev@example.com", password: "developer123", role: "Developer" }
+     ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Dashboard Page**
 
-## Deploy on Vercel
+   * Filter and search projects by name, status, priority, and assigned user
+   * Sort columns by clicking headers
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Project Details Page**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   * View project details
+   * Manage tasks (add/edit/delete) depending on role
+   * Developers can edit tasks only
+   * Bulk update task status
+
+---
+
+## Role-Based Access
+
+| Role               | Projects    | Tasks      |
+| ------------------ | ----------- | ---------- |
+| **Admin**          | Edit/Delete | Manage all |
+| **ProjectManager** | Edit        | Manage all |
+| **Developer**      | View only   | Edit only  |
+
+---
+
+## Future / Optional Features
+
+* Real-time WebSocket updates (not implemented)
+* PWA support with offline caching
+* Charts for project progress visualization
+
+---
+
+## License
+
+MIT License © [Sarah Mohamed]
+
+---
+
